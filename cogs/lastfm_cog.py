@@ -11,7 +11,6 @@ import requests
 import urllib.request
 from data import permissions, lastfm_users
 from discord.ext import commands
-from PIL import Image
 
 API_KEY, API_SECRET = open("cogs/api.txt", "r").readlines()
 
@@ -180,7 +179,7 @@ def get_top_artists(user):
 def get_primary_color(image_url):
     """Get the primary color of the currently playing album"""
     urllib.request.urlretrieve(image_url, "album_art.jpg")
-    
+
     palette = colorific.extract_colors("album_art.jpg", min_prominence=0.1)
     primary_color_rgb = palette.colors[0].value
     primary_color = "0x" + colorific.rgb_to_hex(primary_color_rgb)[1:]
@@ -225,10 +224,12 @@ class LastfmCog:
         user = lastfm_users.get_user(author_id)
         if user is None:
             await self.bot.say(bad_username)
+            return
 
         last_played = get_last_played(user)
         if last_played is None:
             await self.bot.say(bad_last_played)
+            return
 
         await commands.Command.invoke(self.embed_last_played, ctx)
 
@@ -281,6 +282,17 @@ class LastfmCog:
 
         lastfm_users.add_user(author_id, user)
         await self.bot.say("Username successfully set!")
+
+    @embed_last_played.error
+    async def embed_last_played_error(self, error, ctx):
+        """Displays any error messages produced by embed"""
+        if isinstance(error, commands.CommandOnCooldown):
+            mins = int(error.retry_after / 60)
+            secs = int(error.retry_after % 60)
+            cooldown_msg = "Wait {}m, {}s for the cooldown."
+            await self.bot.say(cooldown_msg.format(mins, secs))
+        else:
+            await self.bot.say("Unknown error. <@359613794843885569>!")
 
 
 def setup(bot):
