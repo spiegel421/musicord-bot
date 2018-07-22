@@ -9,7 +9,7 @@ import discord
 import json
 import requests
 import urllib.request
-from data import permissions, lastfm_users
+from data import permissions_data, lastfm_data
 from discord.ext import commands
 
 API_KEY, API_SECRET = open("cogs/api.txt", "r").readlines()
@@ -44,7 +44,7 @@ def get_page_url(method, user, results_per_page=1000, page=1):
     return url
 
 
-def get_page_url_alt(method, user, artist, results_per_page=1000, page=1):
+def get_page_url_alt(method, user, artist, page, results_per_page=200):
     """Same as above, but for artist-dependent methods"""
     url = (("http://ws.audioscrobbler.com/2.0/" +
             "?method={}" +
@@ -119,10 +119,13 @@ def get_last_played(user):
 def get_num_scrobbles_of_artist(user, artist):
     """Find number of times user has scrobbled an artist"""
     method = "user.getArtistTracks"
-    page_url = get_page_url_alt(method, user, artist)
+
+    page = 1
+    num_scrobbles = 0
+    page_url = get_page_url_alt(method, user, artist, page)
     request = requests.get(page_url)
 
-    if request.status_code == 200:
+    while request.status_code == 200:
         content = request.text
         parsed_content = json.loads(content)
 
@@ -133,11 +136,16 @@ def get_num_scrobbles_of_artist(user, artist):
             pass
 
         if error is None:
-            artist_tracks = parsed_json['artisttracks']['track']
-            num_scrobbles = len(artist_tracks)
-            return num_scrobbles
+            artist_tracks = parsed_content['artisttracks']['track']
+            if len(artist_tracks) == 0:
+                break
+            num_scrobbles += len(artist_tracks)
 
-    return None
+        page += 1
+        page_url = get_page_url_alt(method, user, artist, page)
+        request = requests.get(page_url)
+
+    return num_scrobbles
 
 
 def make_top_artist_dict(parsed_content):
@@ -217,11 +225,11 @@ class LastfmCog:
             return
 
         # Bad channel permissions.
-        if channel_id not in permissions.get_allowed_channels("lastfm"):
+        if channel_id not in permissions_data.get_allowed_channels("lastfm"):
             await self.bot.say(bad_permissions)
             return
 
-        user = lastfm_users.get_user(author_id)
+        user = lastfm_data.get_user(author_id)
         if user is None:
             await self.bot.say(bad_username)
             return
@@ -241,7 +249,7 @@ class LastfmCog:
         author_id = author.id
         avatar_url = author.avatar_url
 
-        user = lastfm_users.get_user(author_id)
+        user = lastfm_data.get_user(author_id)
         last_played = get_last_played(user)
 
         name, artist, album, image_url = last_played
@@ -272,7 +280,8 @@ class LastfmCog:
         bad_permissions = "Sorry, you cannot use that command here."
         bad_username = "That is not a valid lastfm username."
 
-        if channel_id not in permissions.get_allowed_channels("lastfm set"):
+        channels = permissions_data.get_allowed_channels("lastfm set")
+        if channel_id not in channels:
             await self.bot.say(bad_permissions)
             return
 
@@ -280,12 +289,41 @@ class LastfmCog:
             await self.bot.say(bad_username)
             return
 
-        lastfm_users.add_user(author_id, user)
+        lastfm_data.add_user(author_id, user)
         await self.bot.say("Username successfully set!")
+
+    @lastfm.command(pass_context=True)
+    async def scrobbles(self, ctx, *args):
+        """Display the number of times a user has scrobbled an artist"""
+        artist = ""
+        for word in args:
+            artist += word + " "
+        artist = artist[:-1]
+
+        channel_id = ctx.message.channel.id
+        author_id = ctx.message.author.id
+        author_name = ctx.message.author.name
+
+        bad_permissions = "Sorry, you cannot use that command here."
+        bad_username = "Please set a lastfm username first."
+
+        channels = permissions_data.get_allowed_channels("lastfm scrobbles")
+        if channel_id not in channels:
+            await self.bot.say(bad_permissions)
+            return
+
+        user = lastfm_data.get_user(author_id)
+        if user is None:
+            await self.bot.say(bad_username)
+            return
+
+        num_scrobbles = get_num_scrobbles_of_artist(user, artist)
+        await self.bot.say(author_name + " has scrobbled " + artist +
+                           " " + str(num_scrobbles) + " times.")
 
     @embed_last_played.error
     async def embed_last_played_error(self, error, ctx):
-        """Displays any error messages produced by embed"""
+        """Display any error messages produced by embed"""
         if isinstance(error, commands.CommandOnCooldown):
             mins = int(error.retry_after / 60)
             secs = int(error.retry_after % 60)
