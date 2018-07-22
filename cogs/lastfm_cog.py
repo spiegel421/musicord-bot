@@ -13,6 +13,7 @@ from data import permissions_data, lastfm_data
 from discord.ext import commands
 
 API_KEY, API_SECRET = open("cogs/api.txt", "r").readlines()
+COOLDOWN = 420
 
 
 def get_user_url(user):
@@ -119,9 +120,9 @@ def get_last_played(user):
 def get_num_scrobbles_of_artist(user, artist):
     """Find number of times user has scrobbled an artist"""
     method = "user.getArtistTracks"
+    num_scrobbles = 0
 
     page = 1
-    num_scrobbles = 0
     page_url = get_page_url_alt(method, user, artist, page)
     request = requests.get(page_url)
 
@@ -186,7 +187,10 @@ def get_top_artists(user):
 
 def get_primary_color(image_url):
     """Get the primary color of the currently playing album"""
-    urllib.request.urlretrieve(image_url, "album_art.jpg")
+    try:
+        urllib.request.urlretrieve(image_url, "album_art.jpg")
+    except:
+        return int("0xffffff", 0)
 
     palette = colorific.extract_colors("album_art.jpg", min_prominence=0.1)
     primary_color_rgb = palette.colors[0].value
@@ -242,7 +246,7 @@ class LastfmCog:
         await commands.Command.invoke(self.embed_last_played, ctx)
 
     @commands.command(pass_context=True)
-    @commands.cooldown(1, 420, commands.BucketType.user)
+    @commands.cooldown(1, COOLDOWN, commands.BucketType.user)
     async def embed_last_played(self, ctx):
         """Create an embed from last played data"""
         author = ctx.message.author
@@ -255,9 +259,10 @@ class LastfmCog:
         name, artist, album, image_url = last_played
 
         rym_link = ("https://rateyourmusic.com/" +
-                    "search?&searchtype=l&searchterm={}")
+                    "search?&searchtype=l&searchterm={}%20{}")
 
-        rym_link = rym_link.format(album.replace(" ", "%20"))
+        rym_link = rym_link.format(artist.replace(" ", "%20"),
+                                   album.replace(" ", "%20"))
         album_search_url = ("[{}]({})").format(album, rym_link)
         user_search_url = "https://www.last.fm/user/{}".format(user)
 
@@ -330,7 +335,7 @@ class LastfmCog:
             cooldown_msg = "Wait {}m, {}s for the cooldown."
             await self.bot.say(cooldown_msg.format(mins, secs))
         else:
-            await self.bot.say("Unknown error. <@359613794843885569>!")
+            await self.bot.say(str(error))
 
 
 def setup(bot):
