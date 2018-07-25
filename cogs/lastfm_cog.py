@@ -117,13 +117,24 @@ def get_last_played(user):
     return None
 
 
+def find_playcount(artist_name, parsed_content):
+    """Find an artist's playcount within a parsed top artists page"""
+    top_artists = parsed_content['topartists']['artist']
+
+    for artist in top_artists:
+        if artist_name.lower() == artist['name'].lower():
+            return artist['playcount']
+
+    return None
+
+
 def get_num_scrobbles_of_artist(user, artist):
     """Find number of times user has scrobbled an artist"""
-    method = "user.getArtistTracks"
+    method = "user.getTopArtists"
     num_scrobbles = 0
 
     page = 1
-    page_url = get_page_url_alt(method, user, artist, page)
+    page_url = get_page_url(method, user, artist, page)
     request = requests.get(page_url)
 
     while request.status_code == 200:
@@ -137,16 +148,17 @@ def get_num_scrobbles_of_artist(user, artist):
             pass
 
         if error is None:
-            artist_tracks = parsed_content['artisttracks']['track']
-            if len(artist_tracks) == 0:
+            num_scrobbles = find_playcount(artist, parsed_content)
+            if num_scrobbles:
+                return num_scrobbles
+            elif len(parsed_content['topartists']['artist']) == 1000:
+                page += 1
+                page_url = get_page_url(method, user, artist, page)
+                request = requests.get(page_url)
+            else:
                 break
-            num_scrobbles += len(artist_tracks)
 
-        page += 1
-        page_url = get_page_url_alt(method, user, artist, page)
-        request = requests.get(page_url)
-
-    return num_scrobbles
+    return 0
 
 
 def make_top_artist_dict(parsed_content):
@@ -192,7 +204,7 @@ def get_primary_color(image_url):
     except:
         return int("0xffffff", 0)
 
-    palette = colorific.extract_colors("album_art.jpg", min_prominence=0.1)
+    palette = colorific.extract_colors("album_art.jpg")
     primary_color_rgb = palette.colors[0].value
     primary_color = "0x" + colorific.rgb_to_hex(primary_color_rgb)[1:]
 
@@ -323,8 +335,8 @@ class LastfmCog:
             return
 
         num_scrobbles = get_num_scrobbles_of_artist(user, artist)
-        await self.bot.say(author_name + " has scrobbled " + artist +
-                           " " + str(num_scrobbles) + " times.")
+        await self.bot.say(author_name + " has scrobbled " + artist + " " +
+                           str(num_scrobbles) + " times.")
 
     @embed_last_played.error
     async def embed_last_played_error(self, error, ctx):
@@ -335,7 +347,7 @@ class LastfmCog:
             cooldown_msg = "Wait {}m, {}s for the cooldown."
             await self.bot.say(cooldown_msg.format(mins, secs))
         else:
-            await self.bot.say(str(error))
+            await self.bot.say("Unknown error occurred.")
 
 
 def setup(bot):
