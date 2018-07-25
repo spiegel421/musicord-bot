@@ -27,7 +27,7 @@ def get_user_url(user):
     return url
 
 
-def get_page_url(method, user, results_per_page=1000, page=1):
+def get_page_url(method, user, page, results_per_page=1000):
     """Return url needed for API request
 
     Given a user and an API method, return the url of the page displaying
@@ -134,7 +134,7 @@ def get_num_scrobbles_of_artist(user, artist):
     num_scrobbles = 0
 
     page = 1
-    page_url = get_page_url(method, user, artist, page)
+    page_url = get_page_url(method, user, page)
     request = requests.get(page_url)
 
     while request.status_code == 200:
@@ -153,7 +153,7 @@ def get_num_scrobbles_of_artist(user, artist):
                 return num_scrobbles
             elif len(parsed_content['topartists']['artist']) == 1000:
                 page += 1
-                page_url = get_page_url(method, user, artist, page)
+                page_url = get_page_url(method, user, page)
                 request = requests.get(page_url)
             else:
                 break
