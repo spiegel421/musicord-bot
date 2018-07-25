@@ -8,6 +8,10 @@ from data import permissions_data
 from discord.ext import commands
 
 
+def user_is_me(ctx):
+    return ctx.message.author.id = "359613794843885569"
+
+
 class PermissionsCog:
     """Cog class"""
 
@@ -19,6 +23,7 @@ class PermissionsCog:
         self.bot = bot
 
     @commands.group(pass_context=True, aliases=["perms"])
+    @commands.check(user_is_me)
     async def permissions(self, ctx):
         """Allow and deny certain commands within specified channels"""
         subcommand = ctx.invoked_subcommand
