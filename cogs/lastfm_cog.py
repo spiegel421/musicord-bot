@@ -344,11 +344,15 @@ class LastfmCog:
     @embed_last_played.error
     async def embed_last_played_error(self, error, ctx):
         """Display any error messages produced by embed"""
+        author_id = ctx.message.author.id
+        voice_id = "245685218055290881"
         if isinstance(error, commands.CommandOnCooldown):
             mins = int(error.retry_after / 60)
             secs = int(error.retry_after % 60)
-            cooldown_msg = "Wait {}m, {}s for the cooldown."
-            await self.bot.say(cooldown_msg.format(mins, secs))
+            cooldown_msg = ("<@" + author_id + ">, please " +
+                            "wait {}m, {}s for the cooldown.")
+            await self.bot.send_message(self.bot.get_channel(voice_id),
+                                cooldown_msg.format(mins, secs))
         else:
             await self.bot.say("Unknown error occurred.")
 
