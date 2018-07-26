@@ -96,7 +96,7 @@ def make_recent_tracks_list(parsed_content):
 def get_last_played(user):
     """Get a user's last played track"""
     method = "user.getRecentTracks"
-    page_url = get_page_url(method, user, results_per_page=1)
+    page_url = get_page_url(method, user, 1, results_per_page=1)
     request = requests.get(page_url)
 
     if request.status_code == 200:
@@ -276,6 +276,9 @@ class LastfmCog:
         rym_link = rym_link.format(artist.replace(" ", "%20"),
                                    album.replace(" ", "%20"))
         album_search_url = ("[{}]({})").format(album, rym_link)
+        if album_search_url[-2] == ")":
+            album_search_url = album_search_url[:-1]
+
         user_search_url = "https://www.last.fm/user/{}".format(user)
 
         color = get_primary_color(image_url)
