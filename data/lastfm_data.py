@@ -52,10 +52,10 @@ def get_user(id):
     cnx = connect(user="root", database=DB_NAME, password=PASSWORD)
     cursor = cnx.cursor()
 
-    get_username = ("SELECT `user` FROM `lastfm_users` "
+    get_user = ("SELECT `user` FROM `lastfm_users` "
                     "WHERE `id` = '{}'".format(id))
 
-    cursor.execute(get_username)
+    cursor.execute(get_user)
     user = None
     for item in cursor:
         user = item[0]
@@ -64,3 +64,21 @@ def get_user(id):
     cnx.close()
 
     return user
+
+
+def get_users_and_ids():
+    """Get a dictionary mapping Discord ids to lastfm usernames"""
+    cnx = connect(user="root", database=DB_NAME, password=PASSWORD)
+    cursor = cnx.cursor()
+
+    get_users_and_ids = ("SELECT `id`, `user` FROM `lastfm_users`")
+
+    cursor.execute(get_users_and_ids)
+    user_to_id_dict = dict()
+    for (id, user) in cursor:
+        user_to_id_dict[user] = id
+
+    cursor.close()
+    cnx.close()
+
+    return user_to_id_dict

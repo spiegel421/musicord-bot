@@ -9,7 +9,7 @@ from discord.ext import commands
 
 
 def user_is_me(ctx):
-    return ctx.message.author.id = "359613794843885569"
+    return ctx.message.author.id == "359613794843885569"
 
 
 class PermissionsCog:

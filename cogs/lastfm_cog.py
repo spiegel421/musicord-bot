@@ -7,6 +7,7 @@ scrobbles, top artists, and a number of other features.
 import colorific
 import discord
 import json
+import math
 import requests
 import urllib.request
 from data import permissions_data, lastfm_data
@@ -177,11 +178,14 @@ def make_top_artist_dict(parsed_content):
 def get_top_artists(user):
     """Find a user's most scrobbled artists"""
     method = "user.getTopArtists"
-    page_url = get_page_url(method, user)
-    request - requests.get(page_url)
+    top_artist_dict = dict()
 
-    if request.status_code == 200:
-        content = request.txt
+    page = 1
+    page_url = get_page_url(method, user, page)
+    request = requests.get(page_url)
+
+    while request.status_code == 200:
+        content = request.text
         parsed_content = json.loads(content)
 
         error = None
@@ -191,11 +195,17 @@ def get_top_artists(user):
             pass
 
         if error is None:
-            top_artists_dict = make_top_artist_dict(parsed_content)
-            return top_artists_dict
+            top_artist_dict = {**top_artist_dict,
+                               **make_top_artist_dict(parsed_content)}
+            if len(parsed_content['topartists']['artist']) == 1000:
+                page += 1
+                page_url = get_page_url(method, user, page)
+                request = requests.get(page_url)
+            else:
+                return top_artist_dict
 
     return None
-
+    
 
 def get_primary_color(image_url):
     """Get the primary color of the currently playing album"""
@@ -209,6 +219,10 @@ def get_primary_color(image_url):
     primary_color = "0x" + colorific.rgb_to_hex(primary_color_rgb)[1:]
 
     return int(primary_color, 0)
+    
+
+def user_is_me(ctx):
+    return ctx.message.author.id == "359613794843885569"
 
 
 class LastfmCog:
@@ -237,7 +251,7 @@ class LastfmCog:
 
         # Invokes any subcommand given.
         subcommand = ctx.invoked_subcommand
-        if subcommand is not None:
+        if subcommand:
             return
 
         # Bad channel permissions.
@@ -333,13 +347,14 @@ class LastfmCog:
             return
 
         user = lastfm_data.get_user(author_id)
-        if user is None:
+        if not user:
             await self.bot.say(bad_username)
             return
 
         num_scrobbles = get_num_scrobbles_of_artist(user, artist)
         await self.bot.say(author_name + " has scrobbled " + artist + " " +
                            str(num_scrobbles) + " times.")
+
 
     @embed_last_played.error
     async def embed_last_played_error(self, error, ctx):
