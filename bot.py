@@ -25,6 +25,6 @@ if __name__ == "__main__":
     tag_cog.setup(bot)
     list_cog.setup(bot)
 
-    with open("token.txt", "r") as reader:
+    with open("token_test.txt", "r") as reader:
         token = reader.read()
         bot.run(token)
