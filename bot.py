@@ -4,8 +4,8 @@
 Runs a bot with the given cogs.
 """
 import discord
-from cogs import lastfm_cog, permissions_cog, compare_cog, tag_cog
-from data import lastfm_data, permissions_data, tag_data
+from cogs import lastfm_cog, permissions_cog, compare_cog, tag_cog, list_cog
+from data import lastfm_data, permissions_data, tag_data, list_data
 from discord.ext import commands
 
 COMMANDS = ["lastfm", "lastfm set", "lastfm scrobbles", "compare", 
@@ -23,13 +23,7 @@ if __name__ == "__main__":
     permissions_cog.setup(bot)
     compare_cog.setup(bot)
     tag_cog.setup(bot)
-    
-    @bot.event
-    async def on_message(message):
-        if "hot take" in message.content:
-            await bot.delete_message(message)
-        
-        await bot.process_commands(message)
+    list_cog.setup(bot)
 
     with open("token.txt", "r") as reader:
         token = reader.read()

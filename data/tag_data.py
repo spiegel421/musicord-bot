@@ -46,6 +46,13 @@ def create_tag_tables():
         "PRIMARY KEY(`owner`)"
         ") ENGINE=InnoDB")
 
+    table = (
+        "CREATE TABLE `ryms` ("
+        "   `owner` char(18) NOT NULL,"
+        "   `content` LONGTEXT NOT NULL,"
+        "PRIMARY KEY(`owner`)"
+        ") ENGINE=InnoDB")
+
     try:
         cursor.execute(table)
     except mysql.connector.Error as err:
@@ -91,6 +98,24 @@ def get_chart_content(owner):
 
     return chart_content
 
+def get_rym_content(owner):
+    """Get content by chart user"""
+    cnx = connect(user="root", database=DB_NAME, password=PASSWORD)
+    cursor = cnx.cursor()
+
+    get_rym_content = ("SELECT `content` FROM `ryms` "
+                    "WHERE `owner` = '{}'".format(owner))
+
+    cursor.execute(get_rym_content)
+    rym_content = None
+    for item in cursor:
+        rym_content = item[0]
+
+    cursor.close()
+    cnx.close()
+
+    return rym_content
+
 def set_tag_content(owner, content):
     """Have owner change tag content"""
     cnx = connect(user="root", database=DB_NAME, password=PASSWORD)
@@ -121,6 +146,22 @@ def set_chart_content(owner, content):
                 "VALUES ('{}', '{}') ".format(owner, content))
 
     cursor.execute(set_chart)
+    cnx.commit()
+
+    cursor.close()
+    cnx.close()
+
+def set_rym_content(owner, content):
+    """Have owner set rym"""
+    cnx = connect(user="root", database=DB_NAME, password=PASSWORD)
+    cursor = cnx.cursor()
+
+    content = content.replace("'", "\\'")
+    set_rym = ("REPLACE INTO `ryms` "
+                "(`owner`, `content`) "
+                "VALUES ('{}', '{}') ".format(owner, content))
+
+    cursor.execute(set_rym)
     cnx.commit()
 
     cursor.close()

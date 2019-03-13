@@ -40,6 +40,9 @@ class TagCog:
     @tag.command(pass_context=True)
     async def edit(self, ctx, *, name):
         """Switch to a tag to edit"""
+        if "Regular" not in [x.name for x in ctx.message.author.roles]:
+            await self.bot.say("You need to have the Regular role to use that command.")
+            return
         channel_id = ctx.message.channel.id
 
         bad_permissions = "Sorry, you cannot use that command here."
@@ -60,6 +63,9 @@ class TagCog:
     @tag.command(pass_context=True, aliases=['s'])
     async def set(self, ctx, *, content):
         """Set content of tag owner is currently editing"""
+        if "Regular" not in [x.name for x in ctx.message.author.roles]:
+            await self.bot.say("You need to have the Regular role to use that command.")
+            return
         channel_id = ctx.message.channel.id
 
         bad_permissions = "Sorry, you cannot use that command here."
@@ -166,6 +172,9 @@ class TagCog:
 
     @commands.command(pass_context=True)
     async def setchart(self, ctx, *, content):
+        if "Regular" not in [x.name for x in ctx.message.author.roles]:
+            await self.bot.say("You need to have the Regular role to use that command.")
+            return
         """Set content of chart"""
         channel_id = ctx.message.channel.id
 
@@ -176,6 +185,47 @@ class TagCog:
 
         tag_data.set_chart_content(ctx.message.author.id, content)
         await self.bot.say("Chart successfully set.")
+
+    @commands.command(pass_context=True)
+    async def rym(self, ctx):
+        """Display any rym content from owner"""
+        channel_id = ctx.message.channel.id
+
+        bad_permissions = "Sorry, you cannot use that command here."
+        if channel_id not in permissions_data.get_allowed_channels("chart"):
+            await self.bot.say(bad_permissions)
+            return
+        
+        if len(ctx.message.content.split(" ")) == 1:
+            member = ctx.message.author
+        else:
+            owner = ctx.message.content[7:]
+            member = discord.utils.find(lambda m: owner.lower() in
+                                        m.name.lower(),
+                                        ctx.message.channel.server.members)
+            if member is None:
+                member = discord.utils.find(lambda m: owner.lower() in 
+                                            m.display_name.lower(),
+                                            ctx.message.channel.server.members)
+
+        content = tag_data.get_rym_content(member.id)
+        await self.bot.say("https://rateyourmusic.com/~" + content)
+
+    @commands.command(pass_context=True)
+    async def setrym(self, ctx, *, content):
+        if "Regular" not in [x.name for x in ctx.message.author.roles]:
+            await self.bot.say("You need to have the Regular role to use that command.")
+            return
+        """Set content of rym"""
+        channel_id = ctx.message.channel.id
+
+        bad_permissions = "Sorry, you cannot use that command here."
+        if channel_id not in permissions_data.get_allowed_channels("chart set"):
+            await self.bot.say(bad_permissions)
+            return
+
+        tag_data.set_rym_content(ctx.message.author.id, content)
+        await self.bot.say("RYM successfully set.")
 
 
 def setup(bot):

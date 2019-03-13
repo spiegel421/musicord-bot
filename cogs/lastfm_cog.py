@@ -9,6 +9,7 @@ import discord
 import json
 import math
 import requests
+import sys
 import urllib.request
 from data import permissions_data, lastfm_data
 from discord.ext import commands
@@ -246,7 +247,8 @@ class LastfmCog:
         author_id = ctx.message.author.id
 
         bad_permissions = "Sorry, you cannot use that command here."
-        bad_username = "Please set a lastfm username first."
+        bad_username = ("Please set a lastfm username in <#245685218055290881> first, "
+                        "using .fm set username.")
         bad_last_played = "I could not find your last played song."
 
         # Invokes any subcommand given.
@@ -268,8 +270,11 @@ class LastfmCog:
         if last_played is None:
             await self.bot.say(bad_last_played)
             return
-
-        await commands.Command.invoke(self.embed_last_played, ctx)
+        
+        if ctx.message.channel.id == "243129311421399050":
+            await commands.Command.invoke(self.embed_last_played, ctx)
+        else:
+            await commands.Command.invoke(self.embed_last_played_no_cooldown, ctx)
 
     @commands.command(pass_context=True)
     @commands.cooldown(1, COOLDOWN, commands.BucketType.user)
@@ -283,22 +288,41 @@ class LastfmCog:
         last_played = get_last_played(user)
 
         name, artist, album, image_url = last_played
-
-        rym_link = ("https://rateyourmusic.com/" +
-                    "search?&searchtype=l&searchterm={}%20{}")
-
-        rym_link = rym_link.format(artist.replace(" ", "%20"),
-                                   album.replace(" ", "%20"))
-        album_search_url = ("[{}]({})").format(album, rym_link)
-        if album_search_url[-2] == ")":
-            album_search_url = album_search_url[:-1]
+        if album == '':
+            album = '\u200b'
 
         user_search_url = "https://www.last.fm/user/{}".format(user)
 
         color = get_primary_color(image_url)
 
         embed = discord.Embed(colour=color, description=name)
-        embed.add_field(name=artist, value=album_search_url)
+        embed.add_field(name=artist, value=album)
+
+        embed.set_author(name=user, icon_url=avatar_url, url=user_search_url)
+        embed.set_thumbnail(url=image_url)
+
+        await self.bot.say(embed=embed)
+
+    @commands.command(pass_context=True)
+    async def embed_last_played_no_cooldown(self, ctx):
+        """Create an embed from last played data"""
+        author = ctx.message.author
+        author_id = author.id
+        avatar_url = author.avatar_url
+
+        user = lastfm_data.get_user(author_id)
+        last_played = get_last_played(user)
+
+        name, artist, album, image_url = last_played
+        if album == '':
+            album = '\u200b'
+
+        user_search_url = "https://www.last.fm/user/{}".format(user)
+
+        color = get_primary_color(image_url)
+
+        embed = discord.Embed(colour=color, description=name)
+        embed.add_field(name=artist, value=album)
 
         embed.set_author(name=user, icon_url=avatar_url, url=user_search_url)
         embed.set_thumbnail(url=image_url)
@@ -355,20 +379,28 @@ class LastfmCog:
         await self.bot.say(author_name + " has scrobbled " + artist + " " +
                            str(num_scrobbles) + " times.")
 
-
     @embed_last_played.error
     async def embed_last_played_error(self, error, ctx):
         """Display any error messages produced by embed"""
         author_id = ctx.message.author.id
         voice_id = "245685218055290881"
-        if isinstance(error, commands.CommandOnCooldown):
-            mins = int(error.retry_after / 60)
-            secs = int(error.retry_after % 60)
-            cooldown_msg = ("<@" + author_id + ">, please " +
-                            "wait {}m, {}s for the cooldown.")
-            await self.bot.send_message(self.bot.get_channel(voice_id),
-                                cooldown_msg.format(mins, secs))
-        else:
+        if(isinstance(error, commands.CommandOnCooldown) and
+           ctx.message.server.id == "243129311421399050"):
+            if ctx.message.author.id != "387046431262769153":
+                mins = int(error.retry_after / 60)
+                secs = int(error.retry_after % 60)
+                cooldown_msg = ("<@" + author_id + ">. Hi, sweetie! Mommy here, " +
+                                "saying you need to take it easy on the fms! Try waiting " +
+                                "another {}m, {}s for me, how about that? :heart:")
+                await self.bot.send_message(self.bot.get_channel(voice_id),
+                                    cooldown_msg.format(mins, secs))
+            else:
+                cooldown_msg = ("Are you fucking  kidding me. Is 'frawg' supposed to be a fun name " +
+                                "or is it an accurate representation of your intelligence level? How. " +
+                                "many. fucking. times. do i Have to haul my fucking ass to send you this " +
+                                "message when you could have just fucking WAITED. FUCK FUCK FUCK")
+                await self.bot.send_message(ctx.message.channel, cooldown_msg)
+        elif ctx.message.server.id == "243129311421399050":
             await self.bot.say("Unknown error occurred.")
 
 
