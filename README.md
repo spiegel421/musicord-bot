@@ -22,7 +22,7 @@ This proved insufficient. I eventually set up a remote EC2 instance over AWS tha
 
 I kept this going for a while.
 
-I would not do something that violates site policy like that again. But, at the time, I felt it not immoral, because finding out new music ought to available to everybody.
+I would not do something that violates site policy like that again. But, at the time, I felt it not immoral, because finding out new music ought to be available to everybody.
 
 I'm unsure how much of the code persists in this GitHub repo, but figured I'd at least link to a written explanation.
 
