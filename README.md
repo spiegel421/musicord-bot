@@ -8,7 +8,7 @@ Though much of the recent work I've done has been proprietary, I have linked, he
 
 These included both last.fm and RateYourMusic.com.
 
-I intensively and intensively researched ML recommender systems, and derived "listening similarity measures" callable to the bot.
+I intensively and extensively researched ML recommender systems, and derived "listening similarity measures" callable to the bot.
 
 As well as top-recommended artists, albums, etc., based on prior listening.
 
