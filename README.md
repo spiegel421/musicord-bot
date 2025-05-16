@@ -2,7 +2,7 @@
 
 The once-official bot of the /r/Music Discord server, while I moderated there.
 
-Note addressed to the reviewers of my job application at Gitlab.
+Note addressed to the reviewers of my job application at GitLab.
 
 Though much of the recent work I've done has been proprietary, I have linked, here, a GitHub project, dating quite a while back, pre-employment in college. I was constructing a Discord bot that provided custom music recommendations, exclusive to users of that server, based on their music consumption habits from numerous websites.
 
@@ -18,7 +18,7 @@ This technically went against the website's crawling policy.
 
 So, I also wrote code to try to reduce the timespan of successive calls by the crawler to the site, so the bot wouldn't get my IP banned.
 
-This proved insufficient. I eventually set up a remote EC2 instance over AWS that regularly changed IP addresses to those expected.
+This proved insufficient. I eventually set up a remote EC2 instance over AWS that regularly changed IP addresses to those usually expected from regular visitors.
 
 I kept this going for a while.
 
