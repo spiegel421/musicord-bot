@@ -1,6 +1,6 @@
 # musicord-bot
 
-The official bot of the /r/Music Discord server.
+The once-official bot of the /r/Music Discord server, while I moderated there.
 
 Note addressed to the reviewers of my job application at Gitlab.
 
