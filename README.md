@@ -12,13 +12,13 @@ I intensively and extensively researched ML recommender systems, and derived "li
 
 As well as top-recommended artists, albums, etc., based on prior listening.
 
-At one point, I had desgned a web crawler designed to gather data from RateYourMusic.com.
+At one point, I had designed a web crawler intended to gather data from RateYourMusic.com.
 
 This technically went against the website's crawling policy.
 
 So, I also wrote code to try to reduce the timespan of successive calls by the crawler to the site, so the bot wouldn't get my IP banned.
 
-This proved insufficient. I eventually set up a remote EC2 instance over AWS that regularly changed IP addresses to those usually expected from regular visitors.
+This proved insufficient. I eventually set up a remote EC2 instance over AWS that regularly changed IP addresses to those usually expected from normal visitors.
 
 I kept this going for a while.
 
